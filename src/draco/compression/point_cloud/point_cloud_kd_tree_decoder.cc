@@ -26,6 +26,16 @@ bool PointCloudKdTreeDecoder::DecodeGeometryData() {
   if (num_points < 0) {
     return false;
   }
+  // Same generous absolute cap as PointCloudSequentialDecoder: the
+  // header num_points is attacker-controlled and otherwise unbounded
+  // (a small file claiming 2,147,483,647 points drove a ~25.7 GB
+  // attribute-buffer allocation and aborted the process). Not a
+  // bound against remaining input size, which would false-positive on
+  // valid highly-compressible files.
+  constexpr int32_t kMaxNumPoints = 100000000;
+  if (num_points > kMaxNumPoints) {
+    return false;
+  }
   point_cloud()->set_num_points(num_points);
   return true;
 }

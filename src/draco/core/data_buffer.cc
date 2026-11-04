@@ -15,31 +15,48 @@
 #include "draco/core/data_buffer.h"
 
 #include <algorithm>
+#include <new>
+#include <stdexcept>
 
 namespace draco {
 
-DataBuffer::DataBuffer() = default;
+DataBuffer::DataBuffer() {}
 
-bool DataBuffer::Update(const void* data, int64_t size) {
+bool DataBuffer::Update(const void *data, int64_t size) {
   const int64_t offset = 0;
   return this->Update(data, size, offset);
 }
 
-bool DataBuffer::Update(const void* data, int64_t size, int64_t offset) {
+bool DataBuffer::Update(const void *data, int64_t size, int64_t offset) {
   if (data == nullptr) {
     if (size + offset < 0) {
       return false;
     }
-    // If no data is provided, just resize the buffer.
-    data_.resize(size + offset);
+    // If no data is provided, just resize the buffer. The requested
+    // size may come from an attacker-controlled point count, so a
+    // failed allocation must be reported, not allowed to terminate
+    // the caller via an uncaught std::bad_alloc.
+    try {
+      data_.resize(size + offset);
+    } catch (const std::bad_alloc &) {
+      return false;
+    } catch (const std::length_error &) {
+      return false;
+    }
   } else {
     if (size < 0) {
       return false;
     }
     if (size + offset > static_cast<int64_t>(data_.size())) {
-      data_.resize(size + offset);
+      try {
+        data_.resize(size + offset);
+      } catch (const std::bad_alloc &) {
+        return false;
+      } catch (const std::length_error &) {
+        return false;
+      }
     }
-    const uint8_t* const byte_data = static_cast<const uint8_t*>(data);
+    const uint8_t *const byte_data = static_cast<const uint8_t *>(data);
     std::copy(byte_data, byte_data + size, data_.data() + offset);
   }
   descriptor_.buffer_update_count++;
@@ -51,11 +68,11 @@ void DataBuffer::Resize(int64_t size) {
   descriptor_.buffer_update_count++;
 }
 
-void DataBuffer::WriteDataToStream(std::ostream& stream) {
+void DataBuffer::WriteDataToStream(std::ostream &stream) {
   if (data_.empty()) {
     return;
   }
-  stream.write(reinterpret_cast<char*>(data_.data()), data_.size());
+  stream.write(reinterpret_cast<char *>(data_.data()), data_.size());
 }
 
 }  // namespace draco

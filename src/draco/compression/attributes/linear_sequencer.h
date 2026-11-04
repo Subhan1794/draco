@@ -17,6 +17,9 @@
 
 #include "draco/compression/attributes/points_sequencer.h"
 
+#include <new>
+#include <stdexcept>
+
 namespace draco {
 
 // A simple sequencer that generates a linear sequence [0, num_points - 1].
@@ -25,7 +28,7 @@ class LinearSequencer : public PointsSequencer {
  public:
   explicit LinearSequencer(int32_t num_points) : num_points_(num_points) {}
 
-  bool UpdatePointToAttributeIndexMapping(PointAttribute* attribute) override {
+  bool UpdatePointToAttributeIndexMapping(PointAttribute *attribute) override {
     attribute->SetIdentityMapping();
     return true;
   }
@@ -35,7 +38,18 @@ class LinearSequencer : public PointsSequencer {
     if (num_points_ < 0) {
       return false;
     }
-    out_point_ids()->resize(num_points_);
+    // A header-declared num_points is attacker-controlled and is only
+    // checked for negativity before this point. If the allocation for
+    // the sequence fails (e.g. a 2-billion-point claim from a few
+    // hundred input bytes), fail the decode gracefully instead of
+    // letting std::bad_alloc terminate the calling process.
+    try {
+      out_point_ids()->resize(num_points_);
+    } catch (const std::bad_alloc &) {
+      return false;
+    } catch (const std::length_error &) {
+      return false;
+    }
     for (int i = 0; i < num_points_; ++i) {
       out_point_ids()->at(i) = PointIndex(i);
     }
