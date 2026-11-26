@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 #include "draco/compression/point_cloud/point_cloud_kd_tree_decoder.h"
+
 #include "draco/compression/attributes/kd_tree_attributes_decoder.h"
 
 namespace draco {
