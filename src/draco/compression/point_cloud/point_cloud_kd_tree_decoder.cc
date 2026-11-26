@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
 #include "draco/compression/point_cloud/point_cloud_kd_tree_decoder.h"
 #include "draco/compression/attributes/kd_tree_attributes_decoder.h"
 
@@ -39,8 +39,7 @@ bool PointCloudKdTreeDecoder::DecodeGeometryData() {
   return true;
 }
 
-bool PointCloudKdTreeDecoder::CreateAttributesDecoder(
-    int32_t att_decoder_id) {
+bool PointCloudKdTreeDecoder::CreateAttributesDecoder(int32_t att_decoder_id) {
   // Always create the basic attribute decoder.
   return SetAttributesDecoder(
       att_decoder_id,
