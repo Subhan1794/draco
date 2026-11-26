@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
 #ifndef DRACO_COMPRESSION_ATTRIBUTES_LINEAR_SEQUENCER_H_
 #define DRACO_COMPRESSION_ATTRIBUTES_LINEAR_SEQUENCER_H_
 
