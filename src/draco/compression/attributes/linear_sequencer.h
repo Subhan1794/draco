@@ -11,11 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+
 #ifndef DRACO_COMPRESSION_ATTRIBUTES_LINEAR_SEQUENCER_H_
 #define DRACO_COMPRESSION_ATTRIBUTES_LINEAR_SEQUENCER_H_
 
 #include "draco/compression/attributes/points_sequencer.h"
+
+#include <new>
+#include <stdexcept>
 
 namespace draco {
 
@@ -35,7 +38,18 @@ class LinearSequencer : public PointsSequencer {
     if (num_points_ < 0) {
       return false;
     }
-    out_point_ids()->resize(num_points_);
+    // A header-declared num_points is attacker-controlled and is only
+    // checked for negativity before this point. If the allocation for
+    // the sequence fails (e.g. a 2-billion-point claim from a few
+    // hundred input bytes), fail the decode gracefully instead of
+    // letting std::bad_alloc terminate the calling process.
+    try {
+      out_point_ids()->resize(num_points_);
+    } catch (const std::bad_alloc &) {
+      return false;
+    } catch (const std::length_error &) {
+      return false;
+    }
     for (int i = 0; i < num_points_; ++i) {
       out_point_ids()->at(i) = PointIndex(i);
     }
