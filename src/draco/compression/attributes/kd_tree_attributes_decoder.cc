@@ -158,7 +158,12 @@ bool KdTreeAttributesDecoder::DecodePortableAttributes(
     PointAttribute* const att = GetDecoder()->point_cloud()->attribute(att_id);
     // All attributes have the same number of values and identity mapping
     // between PointIndex and AttributeValueIndex.
-    att->Reset(num_points);
+    // Reset() reports a failed (e.g. attacker-controlled, huge)
+    // allocation as false; it must not be ignored, or decoding would
+    // continue against an un-resized buffer.
+    if (!att->Reset(num_points)) {
+      return false;
+    }
     att->SetIdentityMapping();
 
     PointAttribute* target_att = nullptr;
@@ -183,7 +188,9 @@ bool KdTreeAttributesDecoder::DecodePortableAttributes(
               num_components * DataTypeLength(DT_UINT32), 0);
       std::unique_ptr<PointAttribute> port_att(new PointAttribute(va));
       port_att->SetIdentityMapping();
-      port_att->Reset(num_points);
+      if (!port_att->Reset(num_points)) {
+        return false;
+      }
       quantized_portable_attributes_.push_back(std::move(port_att));
       target_att = quantized_portable_attributes_.back().get();
     } else {
@@ -365,7 +372,9 @@ bool KdTreeAttributesDecoder::DecodeDataNeededByPortableTransforms(
     if (!in_buffer->Decode(&num_points)) {
       return false;
     }
-    att->Reset(num_points);
+    if (!att->Reset(num_points)) {
+      return false;
+    }
     FloatPointsTreeDecoder decoder;
     decoder.set_num_points_from_header(num_points);
     PointAttributeVectorOutputIterator<float> out_it(atts);
@@ -395,7 +404,9 @@ bool KdTreeAttributesDecoder::DecodeDataNeededByPortableTransforms(
       const int att_id = GetAttributeId(attribute_index);
       PointAttribute* const attr =
           GetDecoder()->point_cloud()->attribute(att_id);
-      attr->Reset(num_points);
+      if (!attr->Reset(num_points)) {
+        return false;
+      }
       attr->SetIdentityMapping();
     }
 
