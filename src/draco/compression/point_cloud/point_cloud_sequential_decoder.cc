@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 #include "draco/compression/point_cloud/point_cloud_sequential_decoder.h"
+
 #include "draco/compression/attributes/linear_sequencer.h"
 #include "draco/compression/attributes/sequential_attribute_decoders_controller.h"
 
